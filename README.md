@@ -33,6 +33,13 @@ Optional endpoints:
 export OPENROUTER_BASE_URL="https://openrouter.ai/api/v1"
 export GIGACHAT_BASE_URL="https://gigachat.devices.sberbank.ru/api/v1"
 ```
+
+If your environment requires disabling SSL verification for GigaChat (e.g. a custom
+certificate chain), you can set:
+
+```bash
+export GIGACHAT_SSL_VERIFY="false"
+```
 ## Inspect samples / system prompts
 
 Inspect a couple of samples and check if a dataset embeds a system prompt:

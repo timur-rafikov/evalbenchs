@@ -5,6 +5,7 @@ import os
 from typing import Any
 
 import aiohttp
+import ssl
 
 
 class GigaChatClient:
@@ -16,6 +17,11 @@ class GigaChatClient:
             "GIGACHAT_BASE_URL",
             "https://gigachat.devices.sberbank.ru/api/v1",
         )
+        verify_setting = os.getenv("GIGACHAT_SSL_VERIFY", "true").strip().lower()
+        self.ssl_verify = verify_setting not in {"0", "false", "no"}
+        self._ssl_context = None
+        if self.ssl_verify:
+            self._ssl_context = ssl.create_default_context()
 
     async def chat(self, model: str, messages: list[dict[str, str]], temperature: float = 0.0) -> dict[str, Any]:
         url = f"{self.base_url}/chat/completions"
@@ -28,9 +34,16 @@ class GigaChatClient:
             "messages": messages,
             "temperature": temperature,
         }
+        ssl_setting: ssl.SSLContext | bool = self._ssl_context if self.ssl_verify else False
         async with aiohttp.ClientSession() as session:
             try:
-                async with session.post(url, headers=headers, json=payload, timeout=120) as response:
+                async with session.post(
+                    url,
+                    headers=headers,
+                    json=payload,
+                    timeout=120,
+                    ssl=ssl_setting,
+                ) as response:
                     if response.status >= 400:
                         detail = await response.text()
                         raise RuntimeError(
