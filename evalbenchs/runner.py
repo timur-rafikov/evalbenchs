@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -96,6 +97,7 @@ async def run_benchmark(
         "total": len(tasks),
         "desc": f"{benchmark.name}-{model}",
         "leave": True,
+        "disable": not sys.stderr.isatty(),
     }
     if progress_position is not None:
         progress_kwargs["position"] = progress_position
