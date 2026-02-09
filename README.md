@@ -49,4 +49,6 @@ Run a quick smoke test (2-3 samples) for a single benchmark:
 run-benchmarks --bench 1 --sample-size 3
 ```
 
-Output is written to `runs/<benchmark-id>_<model>.jsonl`.
+Output is written to `runs/<benchmark-id>_<model>.jsonl`. A consolidated
+`runs/summary.csv` is also generated with accuracy statistics across all
+benchmarks and models.
