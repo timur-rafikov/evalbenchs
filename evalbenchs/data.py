@@ -5,6 +5,7 @@ import os
 import re
 import shutil
 import tempfile
+import zipfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable
@@ -29,14 +30,33 @@ def _download_github_repo(repo_url: str, destination: Path) -> Path:
     if not match:
         raise ValueError(f"Unsupported GitHub URL: {repo_url}")
     repo_path = match.group(1).replace(".git", "")
-    zip_url = f"https://codeload.github.com/{repo_path}/zip/refs/heads/main"
-    response = requests.get(zip_url, timeout=30)
-    if response.status_code != 200:
-        zip_url = f"https://codeload.github.com/{repo_path}/zip/refs/heads/master"
+    default_branch = None
+    repo_api = f"https://api.github.com/repos/{repo_path}"
+    try:
+        repo_response = requests.get(repo_api, timeout=30)
+        repo_response.raise_for_status()
+        default_branch = repo_response.json().get("default_branch")
+    except requests.RequestException:
+        default_branch = None
+    zip_candidates = [branch for branch in [default_branch, "main", "master"] if branch]
+    response = None
+    zip_url = None
+    for branch in zip_candidates:
+        zip_url = f"https://codeload.github.com/{repo_path}/zip/refs/heads/{branch}"
         response = requests.get(zip_url, timeout=30)
+        if response.status_code == 200:
+            break
+    if response is None:
+        raise RuntimeError("Unable to download GitHub repository archive")
     response.raise_for_status()
     zip_path = destination / "repo.zip"
     zip_path.write_bytes(response.content)
+    if not zipfile.is_zipfile(zip_path):
+        detail = response.text.strip()
+        raise RuntimeError(
+            f"GitHub download did not return a zip archive from {zip_url}: "
+            f"{detail or 'unknown error'}"
+        )
     shutil.unpack_archive(str(zip_path), destination)
     extracted_dirs = [path for path in destination.iterdir() if path.is_dir()]
     if not extracted_dirs:

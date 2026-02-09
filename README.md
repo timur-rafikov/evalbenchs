@@ -26,6 +26,13 @@ Set your GigaChat API key (used for models with the `gigachat/` prefix):
 ```bash
 export GIGACHAT_API_KEY="..."
 ```
+
+Optional endpoints:
+
+```bash
+export OPENROUTER_BASE_URL="https://openrouter.ai/api/v1"
+export GIGACHAT_BASE_URL="https://gigachat.devices.sberbank.ru/api/v1"
+```
 ## Inspect samples / system prompts
 
 Inspect a couple of samples and check if a dataset embeds a system prompt:
@@ -41,6 +48,10 @@ Run all benchmarks with the default models (GigaChat 2 Max v.28 via GigaChat API
 ```bash
 run-benchmarks --sample-size 300 --max-concurrency 4
 ```
+
+`--max-concurrency` limits how many requests are in-flight to a provider for a single
+benchmark+model run. It does not cap the number of benchmarks/models executed in
+parallel.
 
 Run a subset of benchmarks (by id), e.g. only benchmarks 1 and 3:
 
