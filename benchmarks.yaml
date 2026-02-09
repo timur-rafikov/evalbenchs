@@ -1,0 +1,103 @@
+base_system_prompt: >
+  You are a careful domain expert. Answer the question as accurately as possible.
+  If the task is multiple choice, respond with the single best option letter and
+  the option text if available.
+
+benchmarks:
+  - id: 1
+    name: FormationEval
+    domain: "Нефть и Газ"
+    source: github
+    repo: "https://github.com/AlmazErmilov/FormationEval-an-Open-Benchmark-for-Oil-Gas-Geoscience-MCQ-Evaluation"
+    split: "test"
+    system_prompt: null
+    notes: "No explicit system prompt found in dataset docs; falls back to base_system_prompt."
+  - id: 2
+    name: ruTXTAquaBench
+    domain: "Рыбодобывающее производство"
+    source: huggingface
+    hf_repo: "MERA-evaluation/ruTXTAquaBench"
+    split: "test"
+    system_prompt: null
+    notes: "No explicit system prompt found in dataset card; falls back to base_system_prompt."
+  - id: 3
+    name: TeleQnA
+    domain: "Связь и телекоммуникации"
+    source: github
+    repo: "https://github.com/netop-team/TeleQnA"
+    split: "test"
+    system_prompt: null
+    notes: "No explicit system prompt found in dataset docs; falls back to base_system_prompt."
+  - id: 4
+    name: AECBench
+    domain: "Строительство"
+    source: huggingface
+    hf_repo: "jackluoluo/AECBench"
+    split: "test"
+    system_prompt: null
+    notes: "No explicit system prompt found in dataset card; falls back to base_system_prompt."
+  - id: 5
+    name: MMLU-Pro (business)
+    domain: "Торговля"
+    source: huggingface
+    hf_repo: "TIGER-Lab/MMLU-Pro"
+    hf_config: "business"
+    split: "test"
+    system_prompt: null
+    notes: "No explicit system prompt found in dataset card; falls back to base_system_prompt."
+  - id: 6
+    name: TransportBench
+    domain: "Транспорт и логистика"
+    source: huggingface
+    hf_repo: "usyed3/TransportBench"
+    split: "test"
+    system_prompt: null
+    notes: "No explicit system prompt found in dataset card; falls back to base_system_prompt."
+  - id: 7
+    name: ElecBench
+    domain: "Электроэнергетика"
+    source: github
+    repo: "https://github.com/xiyuan-zhou/ElecBench-a-Power-Dispatch-Evaluation-Benchmark-for-Large-Language-Models"
+    split: "test"
+    system_prompt: null
+    notes: "No explicit system prompt found in dataset docs; falls back to base_system_prompt."
+  - id: 8
+    name: ChemBench
+    domain: "Химия"
+    source: huggingface
+    hf_repo: "jablonkagroup/ChemBench"
+    split: "test"
+    system_prompt: null
+    notes: "No explicit system prompt found in dataset card; falls back to base_system_prompt."
+  - id: 9
+    name: EngiBench
+    domain: "Машиностроение"
+    source: github
+    repo: "https://github.com/IDEALLab/EngiBench"
+    split: "test"
+    system_prompt: null
+    notes: "No explicit system prompt found in dataset docs; falls back to base_system_prompt."
+  - id: 10
+    name: metallurgy_qa
+    domain: "Металлургия"
+    source: huggingface
+    hf_repo: "AbdulrhmanEldeeb/metallurgy-qa"
+    split: "test"
+    system_prompt: null
+    notes: "No explicit system prompt found in dataset card; falls back to base_system_prompt."
+  - id: 11
+    name: ruTXTAgroBench
+    domain: "АПК"
+    source: huggingface
+    hf_repo: "MERA-evaluation/ruTXTAgroBench"
+    split: "test"
+    system_prompt: null
+    notes: "No explicit system prompt found in dataset card; falls back to base_system_prompt."
+  - id: 12
+    name: RuMedBench
+    domain: "Фармацевтика"
+    source: github
+    repo: "https://github.com/sberbank-ai-lab/RuMedBench"
+    split: "test"
+    system_prompt: null
+    notes: "No explicit system prompt found in dataset docs; falls back to base_system_prompt."
