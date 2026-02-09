@@ -10,6 +10,7 @@ from tqdm import tqdm
 
 from evalbenchs.config import BenchmarkConfig, Config
 from evalbenchs.data import load_benchmark, sample_dataset
+from evalbenchs.gigachat import GigaChatClient
 from evalbenchs.openrouter import OpenRouterClient
 from evalbenchs.prompting import PromptBuilder, extract_choice_from_response, extract_gold_answer
 
@@ -42,7 +43,7 @@ def _score_response(example: dict[str, Any], response_text: str) -> bool:
 
 
 async def _run_example(
-    client: OpenRouterClient,
+    client: OpenRouterClient | GigaChatClient,
     model: str,
     prompt_builder: PromptBuilder,
     example: dict[str, Any],
@@ -78,10 +79,15 @@ async def run_benchmark(
     output_dir.mkdir(parents=True, exist_ok=True)
     output_path = output_dir / f"{benchmark.id}_{model.replace('/', '_')}.jsonl"
     semaphore = asyncio.Semaphore(max_concurrency)
-    client = OpenRouterClient()
+    if model.startswith("gigachat/"):
+        client = GigaChatClient()
+        model_name = model.split("/", 1)[1]
+    else:
+        client = OpenRouterClient()
+        model_name = model
 
     tasks = [
-        _run_example(client, model, prompt_builder, example, semaphore)
+        _run_example(client, model_name, prompt_builder, example, semaphore)
         for example in dataset
     ]
 

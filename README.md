@@ -21,6 +21,11 @@ Set your OpenRouter API key:
 export OPENROUTER_API_KEY="..."
 ```
 
+Set your GigaChat API key (used for models with the `gigachat/` prefix):
+
+```bash
+export GIGACHAT_API_KEY="..."
+```
 ## Inspect samples / system prompts
 
 Inspect a couple of samples and check if a dataset embeds a system prompt:
@@ -31,7 +36,7 @@ inspect-benchmarks --bench 1 --samples 2
 
 ## Run benchmarks
 
-Run all benchmarks with the default models (GigaChat 2 Max v.28 and GPT-4o-mini):
+Run all benchmarks with the default models (GigaChat 2 Max v.28 via GigaChat API and GPT-4o-mini via OpenRouter):
 
 ```bash
 run-benchmarks --sample-size 300 --max-concurrency 4
