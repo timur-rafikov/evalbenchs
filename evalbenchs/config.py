@@ -19,6 +19,10 @@ class BenchmarkConfig:
     repo: str | None = None
     system_prompt: str | None = None
     notes: str | None = None
+    # Optional schema overrides for dataset columns (single key or first match wins)
+    question_key: str | None = None
+    choices_key: str | None = None
+    answer_key: str | None = None
 
 
 @dataclass
@@ -43,6 +47,9 @@ def load_config(path: str | Path) -> Config:
             repo=item.get("repo"),
             system_prompt=item.get("system_prompt"),
             notes=item.get("notes"),
+            question_key=item.get("question_key"),
+            choices_key=item.get("choices_key"),
+            answer_key=item.get("answer_key"),
         )
         for item in data["benchmarks"]
     ]
@@ -72,4 +79,7 @@ def as_dict(config: BenchmarkConfig) -> dict[str, Any]:
         "repo": config.repo,
         "system_prompt": config.system_prompt,
         "notes": config.notes,
+        "question_key": config.question_key,
+        "choices_key": config.choices_key,
+        "answer_key": config.answer_key,
     }

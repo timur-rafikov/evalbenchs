@@ -21,24 +21,26 @@ Set your OpenRouter API key:
 export OPENROUTER_API_KEY="..."
 ```
 
-Set your GigaChat API key (used for models with the `gigachat/` prefix):
+GigaChat (used for models with the `gigachat/` prefix) uses the official SDK and
+credentials-based auth:
 
 ```bash
+export GIGACHAT_CREDENTIALS="..."
+# or legacy:
 export GIGACHAT_API_KEY="..."
 ```
 
-Optional endpoints:
+Optional:
 
 ```bash
+export GIGACHAT_SCOPE="GIGACHAT_API_CORP"
 export OPENROUTER_BASE_URL="https://openrouter.ai/api/v1"
-export GIGACHAT_BASE_URL="https://gigachat.devices.sberbank.ru/api/v1"
 ```
 
-If your environment requires disabling SSL verification for GigaChat (e.g. a custom
-certificate chain), you can set:
+To disable SSL verification for GigaChat (e.g. custom certificate):
 
 ```bash
-export GIGACHAT_SSL_VERIFY="false"
+export GIGACHAT_VERIFY_SSL_CERTS="false"
 ```
 ## Inspect samples / system prompts
 

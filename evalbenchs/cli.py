@@ -16,7 +16,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--models",
         nargs="+",
-        default=["openai/gpt-4o-mini", "gigachat/gigachat-2-max"],
+        default=["openai/gpt-4o", "gigachat/gigachat-2-max"],
     )
     parser.add_argument("--output-dir", default="runs")
     parser.add_argument("--sample-size", type=int, default=300)

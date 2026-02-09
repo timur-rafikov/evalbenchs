@@ -2,12 +2,9 @@ from __future__ import annotations
 
 import asyncio
 import json
-import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
-
-from tqdm import tqdm
 
 from evalbenchs.config import BenchmarkConfig, Config
 from evalbenchs.data import load_benchmark, sample_dataset
@@ -35,8 +32,10 @@ def _safe_text(response_json: dict[str, Any]) -> str:
         return ""
 
 
-def _score_response(example: dict[str, Any], response_text: str) -> bool:
-    gold = extract_gold_answer(example)
+def _score_response(
+    example: dict[str, Any], response_text: str, benchmark: BenchmarkConfig | None = None
+) -> bool:
+    gold = extract_gold_answer(example, benchmark)
     if not gold:
         return False
     predicted = extract_choice_from_response(response_text) or response_text.strip()
@@ -49,6 +48,7 @@ async def _run_example(
     prompt_builder: PromptBuilder,
     example: dict[str, Any],
     semaphore: asyncio.Semaphore,
+    benchmark: BenchmarkConfig,
 ) -> dict[str, Any]:
     async with semaphore:
         messages = prompt_builder.build_messages(example)
@@ -58,8 +58,8 @@ async def _run_example(
             "messages": messages,
             "response": response_text,
             "raw": response_json,
-            "correct": _score_response(example, response_text),
-            "gold": extract_gold_answer(example),
+            "correct": _score_response(example, response_text, benchmark),
+            "gold": extract_gold_answer(example, benchmark),
             "example": example,
         }
 
@@ -72,47 +72,43 @@ async def run_benchmark(
     sample_size: int,
     seed: int,
     max_concurrency: int,
-    progress_position: int | None = None,
 ) -> RunResult:
+    print(f"Loading benchmark [{benchmark.id}] {benchmark.name}...")
     loaded = load_benchmark(benchmark)
     dataset = sample_dataset(loaded.dataset, sample_size, seed)
-    prompt_builder = PromptBuilder(config.base_system_prompt, benchmark.system_prompt)
+    total = len(dataset)
+    print(f"Running [{benchmark.id}] {benchmark.name} — {model} ({total} samples).")
+    prompt_builder = PromptBuilder(
+        config.base_system_prompt, benchmark.system_prompt, benchmark=benchmark
+    )
     output_dir.mkdir(parents=True, exist_ok=True)
     output_path = output_dir / f"{benchmark.id}_{model.replace('/', '_')}.jsonl"
     semaphore = asyncio.Semaphore(max_concurrency)
     if model.startswith("gigachat/"):
-        client = GigaChatClient()
         model_name = model.split("/", 1)[1]
+        client = GigaChatClient(model=model_name)
     else:
         client = OpenRouterClient()
         model_name = model
 
     tasks = [
-        _run_example(client, model_name, prompt_builder, example, semaphore)
-        for example in dataset
+        _run_example(client, model_name, prompt_builder, ex, semaphore, benchmark)
+        for ex in dataset
     ]
-
     results: list[dict[str, Any]] = []
-    progress_kwargs = {
-        "total": len(tasks),
-        "desc": f"{benchmark.name}-{model}",
-        "leave": True,
-        "disable": not sys.stderr.isatty(),
-    }
-    if progress_position is not None:
-        progress_kwargs["position"] = progress_position
-
-    with tqdm(**progress_kwargs) as progress:
-        for coro in asyncio.as_completed(tasks):
-            result = await coro
-            results.append(result)
-            progress.update(1)
+    done = 0
+    for coro in asyncio.as_completed(tasks):
+        result = await coro
+        results.append(result)
+        done += 1
+        if done % 50 == 0 or done == total:
+            print(f"  [{benchmark.name}] {model}: {done}/{total} done.")
 
     correct = sum(1 for item in results if item["correct"])
     with output_path.open("w", encoding="utf-8") as handle:
         for item in results:
             handle.write(json.dumps(item, ensure_ascii=False) + "\n")
-
+    print(f"  [{benchmark.name}] {model}: {correct}/{total} correct. Results -> {output_path}")
     return RunResult(benchmark=benchmark, model=model, total=len(results), correct=correct)
 
 
@@ -125,21 +121,9 @@ async def run_all(
     seed: int,
     max_concurrency: int,
 ) -> list[RunResult]:
-    tasks = []
-    position = 0
-    for benchmark in benchmarks:
-        for model in models:
-            tasks.append(
-                run_benchmark(
-                    config,
-                    benchmark,
-                    model,
-                    output_dir,
-                    sample_size,
-                    seed,
-                    max_concurrency,
-                    progress_position=position,
-                )
-            )
-            position += 1
+    tasks = [
+        run_benchmark(config, b, m, output_dir, sample_size, seed, max_concurrency)
+        for b in benchmarks
+        for m in models
+    ]
     return await asyncio.gather(*tasks)

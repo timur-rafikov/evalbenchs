@@ -1,3 +1,7 @@
+# Optional per-benchmark overrides (uncomment and set if column names differ):
+#   question_key: question   # e.g. prompt, query, instruction, stem
+#   choices_key: options      # e.g. choices, options_list
+#   answer_key: answer       # e.g. label, gold, answer_index (numeric -> A,B,C...)
 base_system_prompt: >
   You are a careful domain expert. Answer the question as accurately as possible.
   If the task is multiple choice, respond with the single best option letter and

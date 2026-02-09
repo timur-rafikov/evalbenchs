@@ -4,18 +4,22 @@ version = "0.1.0"
 description = "Run LLMs on domain benchmarks via OpenRouter"
 readme = "README.md"
 requires-python = ">=3.10"
-license = {text = "MIT"}
+license = "MIT"
 authors = [{name = "Evalbenchs"}]
 dependencies = [
-  "aiohttp>=3.9.0",
   "datasets>=2.18.0",
+  "gigachat>=0.1.36",
+  "openai>=1.0.0",
   "pyyaml>=6.0.1",
-  "tqdm>=4.66.0",
+  "requests>=2.28.0",
 ]
 
 [project.scripts]
 run-benchmarks = "evalbenchs.cli:main"
 inspect-benchmarks = "evalbenchs.inspect:main"
+
+[tool.setuptools.packages.find]
+include = ["evalbenchs", "evalbenchs.*"]
 
 [tool.ruff]
 line-length = 100
