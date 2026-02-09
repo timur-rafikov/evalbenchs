@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 from typing import Any
 
@@ -25,6 +26,15 @@ class OpenRouterClient:
             "temperature": temperature,
         }
         async with aiohttp.ClientSession() as session:
-            async with session.post(url, headers=headers, json=payload, timeout=120) as response:
-                response.raise_for_status()
-                return await response.json()
+            try:
+                async with session.post(url, headers=headers, json=payload, timeout=120) as response:
+                    if response.status >= 400:
+                        detail = await response.text()
+                        raise RuntimeError(
+                            f"OpenRouter error {response.status}: {detail.strip() or 'unknown error'}"
+                        )
+                    return await response.json()
+            except aiohttp.ClientError as exc:
+                raise RuntimeError(f"OpenRouter request failed: {exc}") from exc
+            except json.JSONDecodeError as exc:
+                raise RuntimeError("OpenRouter returned invalid JSON") from exc
