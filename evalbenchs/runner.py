@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from tqdm.asyncio import tqdm
+from tqdm import tqdm
 
 from evalbenchs.config import BenchmarkConfig, Config
 from evalbenchs.data import load_benchmark, sample_dataset
@@ -70,6 +70,7 @@ async def run_benchmark(
     sample_size: int,
     seed: int,
     max_concurrency: int,
+    progress_position: int | None = None,
 ) -> RunResult:
     loaded = load_benchmark(benchmark)
     dataset = sample_dataset(loaded.dataset, sample_size, seed)
@@ -85,9 +86,19 @@ async def run_benchmark(
     ]
 
     results: list[dict[str, Any]] = []
-    for coro in tqdm(asyncio.as_completed(tasks), total=len(tasks), desc=f"{benchmark.name}-{model}"):
-        result = await coro
-        results.append(result)
+    progress_kwargs = {
+        "total": len(tasks),
+        "desc": f"{benchmark.name}-{model}",
+        "leave": True,
+    }
+    if progress_position is not None:
+        progress_kwargs["position"] = progress_position
+
+    with tqdm(**progress_kwargs) as progress:
+        for coro in asyncio.as_completed(tasks):
+            result = await coro
+            results.append(result)
+            progress.update(1)
 
     correct = sum(1 for item in results if item["correct"])
     with output_path.open("w", encoding="utf-8") as handle:
@@ -107,6 +118,7 @@ async def run_all(
     max_concurrency: int,
 ) -> list[RunResult]:
     tasks = []
+    position = 0
     for benchmark in benchmarks:
         for model in models:
             tasks.append(
@@ -118,6 +130,8 @@ async def run_all(
                     sample_size,
                     seed,
                     max_concurrency,
+                    progress_position=position,
                 )
             )
+            position += 1
     return await asyncio.gather(*tasks)
