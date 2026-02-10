@@ -42,6 +42,15 @@ To disable SSL verification for GigaChat (e.g. custom certificate):
 ```bash
 export GIGACHAT_VERIFY_SSL_CERTS="false"
 ```
+
+If a benchmark dataset is in a password-protected zip (e.g. TeleQnA):
+
+```bash
+export REPO_ZIP_PASSWORD="teleqnadataset"
+```
+
+TeleQnA can use a local file instead of downloading: set `local_data_path` in `benchmarks.yaml` (e.g. `D:/work/TeleQnA/TeleQnA.txt` on Windows or `/mnt/d/work/TeleQnA/TeleQnA.txt` on WSL).
+
 ## Inspect samples / system prompts
 
 Inspect a couple of samples and check if a dataset embeds a system prompt:

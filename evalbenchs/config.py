@@ -23,6 +23,12 @@ class BenchmarkConfig:
     question_key: str | None = None
     choices_key: str | None = None
     answer_key: str | None = None
+    # If set, load data from this local path instead of downloading (file or directory)
+    local_data_path: str | None = None
+    # For HuggingFace: filter rows by column values, e.g. {"category": "business"}
+    hf_filter: dict[str, Any] | None = None
+    # For GitHub: only use files whose path contains this string (e.g. "RuMedDaNet")
+    github_data_subset: str | None = None
 
 
 @dataclass
@@ -50,6 +56,9 @@ def load_config(path: str | Path) -> Config:
             question_key=item.get("question_key"),
             choices_key=item.get("choices_key"),
             answer_key=item.get("answer_key"),
+            local_data_path=item.get("local_data_path"),
+            hf_filter=item.get("hf_filter"),
+            github_data_subset=item.get("github_data_subset"),
         )
         for item in data["benchmarks"]
     ]
@@ -82,4 +91,7 @@ def as_dict(config: BenchmarkConfig) -> dict[str, Any]:
         "question_key": config.question_key,
         "choices_key": config.choices_key,
         "answer_key": config.answer_key,
+        "local_data_path": config.local_data_path,
+        "hf_filter": config.hf_filter,
+        "github_data_subset": config.github_data_subset,
     }

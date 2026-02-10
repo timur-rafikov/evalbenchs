@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import asyncio
 import os
 from typing import Any
 
 from gigachat import GigaChat
+from gigachat.exceptions import RateLimitError
 
 try:
     from gigachat.models import Chat, Messages, MessagesRole
@@ -24,6 +26,19 @@ def _messages_to_prompt(messages: list[dict[str, str]]) -> str:
         else:
             parts.append(content)
     return "\n\n".join(parts) if parts else ""
+
+
+def _to_serializable(obj: Any) -> Any:
+    """Convert SDK objects (e.g. Usage) to JSON-serializable dict."""
+    if obj is None:
+        return None
+    if hasattr(obj, "model_dump"):
+        return obj.model_dump()
+    if hasattr(obj, "dict"):
+        return obj.dict()
+    if isinstance(obj, dict):
+        return {k: _to_serializable(v) for k, v in obj.items()}
+    return obj
 
 
 def _messages_to_chat(messages: list[dict[str, str]]) -> Any:
@@ -77,9 +92,14 @@ class GigaChatClient:
             "verify_ssl_certs": verify,
             "temperature": 0,
             "profanity_check": False,
+            "max_retries": 3,
+            "retry_on_status_codes": (429, 500, 502, 503, 504),
         }
         if base_url:
             self._client_kwargs["base_url"] = base_url
+        self._client: Any = None
+        self._context: Any = None
+        self._init_lock = asyncio.Lock()
 
     @staticmethod
     def _model_id(name: str) -> str:
@@ -95,17 +115,54 @@ class GigaChatClient:
             return "GigaChat"
         return name
 
+    async def _ensure_client(self) -> None:
+        """Create and hold one GigaChat connection for the whole run (avoids 429 on OAuth)."""
+        async with self._init_lock:
+            if self._client is not None:
+                return
+            self._context = GigaChat(**self._client_kwargs)
+            self._client = await self._context.__aenter__()
+
+    async def close(self) -> None:
+        """Release the shared GigaChat connection. Call after the benchmark run."""
+        async with self._init_lock:
+            if self._context is None:
+                return
+            try:
+                await self._context.__aexit__(None, None, None)
+            finally:
+                self._context = None
+                self._client = None
+
     async def chat(self, model: str, messages: list[dict[str, str]], temperature: float = 0.0) -> dict[str, Any]:
-        """Send chat request. `model` is ignored; instance model is used."""
+        """Send chat request. `model` is ignored; instance model is used. Retries on 429 with backoff."""
+        await self._ensure_client()
         payload = _messages_to_chat(messages)
-        async with GigaChat(**self._client_kwargs) as client:
-            response = await client.achat(payload)
+        last_error = None
+        for attempt in range(4):  # 0..3: up to 4 attempts
+            try:
+                response = await self._client.achat(payload)
+                break
+            except RateLimitError as e:
+                last_error = e
+                if attempt < 3:
+                    delay = (5, 15, 45)[attempt]  # 5s, 15s, 45s
+                    await asyncio.sleep(delay)
+                else:
+                    raise
+        else:
+            if last_error is not None:
+                raise last_error
         content = ""
         if response.choices:
             msg = response.choices[0].message
             if hasattr(msg, "content") and msg.content:
                 content = (msg.content or "").strip()
+        usage = getattr(response, "usage", None)
+        finish_reason = getattr(response.choices[0], "finish_reason", None)
+        if finish_reason is not None and not isinstance(finish_reason, (str, int, float, bool)):
+            finish_reason = str(finish_reason)
         return {
-            "choices": [{"message": {"content": content}, "finish_reason": getattr(response.choices[0], "finish_reason", None)}],
-            "usage": getattr(response, "usage", None),
+            "choices": [{"message": {"content": content}, "finish_reason": finish_reason}],
+            "usage": _to_serializable(usage),
         }

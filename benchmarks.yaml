@@ -21,31 +21,33 @@ benchmarks:
     domain: "Рыбодобывающее производство"
     source: huggingface
     hf_repo: "MERA-evaluation/ruTXTAquaBench"
-    split: "test"
+    split: "train"
     system_prompt: null
-    notes: "No explicit system prompt found in dataset card; falls back to base_system_prompt."
+    notes: "Train split has labels (outputs); test often has no public labels in MERA."
   - id: 3
     name: TeleQnA
     domain: "Связь и телекоммуникации"
     source: github
     repo: "https://github.com/netop-team/TeleQnA"
+    local_data_path: "/mnt/d/work/TeleQnA/TeleQnA.txt"
     split: "test"
     system_prompt: null
-    notes: "No explicit system prompt found in dataset docs; falls back to base_system_prompt."
-  - id: 4
-    name: AECBench
-    domain: "Строительство"
-    source: huggingface
-    hf_repo: "jackluoluo/AECBench"
-    split: "test"
-    system_prompt: null
-    notes: "No explicit system prompt found in dataset card; falls back to base_system_prompt."
+    notes: "Uses local file when local_data_path is set; no download."
+  # - id: 4
+  #   name: AECBench
+  #   domain: "Строительство"
+  #   source: huggingface
+  #   hf_repo: "jackluoluo/AECBench"
+  #   split: "test"
+  #   system_prompt: null
+  #   notes: "Gated dataset: set HF_TOKEN or run huggingface-cli login to enable."
   - id: 5
     name: MMLU-Pro (business)
     domain: "Торговля"
     source: huggingface
     hf_repo: "TIGER-Lab/MMLU-Pro"
-    hf_config: "business"
+    hf_config: "default"
+    hf_filter: { category: business }
     split: "test"
     system_prompt: null
     notes: "No explicit system prompt found in dataset card; falls back to base_system_prompt."
@@ -54,54 +56,60 @@ benchmarks:
     domain: "Транспорт и логистика"
     source: huggingface
     hf_repo: "usyed3/TransportBench"
+    hf_filter: { Problem_type: "T/F" }
     split: "test"
     system_prompt: null
     notes: "No explicit system prompt found in dataset card; falls back to base_system_prompt."
-  - id: 7
-    name: ElecBench
-    domain: "Электроэнергетика"
-    source: github
-    repo: "https://github.com/xiyuan-zhou/ElecBench-a-Power-Dispatch-Evaluation-Benchmark-for-Large-Language-Models"
-    split: "test"
-    system_prompt: null
-    notes: "No explicit system prompt found in dataset docs; falls back to base_system_prompt."
+  # - id: 7
+  #   name: ElecBench
+  #   domain: "Электроэнергетика"
+  #   source: github
+  #   repo: "https://github.com/xiyuan-zhou/ElecBench-a-Power-Dispatch-Evaluation-Benchmark-for-Large-Language-Models"
+  #   split: "test"
+  #   system_prompt: null
+  #   notes: "No explicit system prompt found in dataset docs; falls back to base_system_prompt."
   - id: 8
     name: ChemBench
     domain: "Химия"
     source: huggingface
     hf_repo: "jablonkagroup/ChemBench"
-    split: "test"
+    hf_config: "general_chemistry"
+    hf_filter: { metrics: ["exact_str_match", "mae", "mse"] }
+    split: "train"
     system_prompt: null
     notes: "No explicit system prompt found in dataset card; falls back to base_system_prompt."
   - id: 9
-    name: EngiBench
+    name: MMLU-Pro (engineering)
     domain: "Машиностроение"
-    source: github
-    repo: "https://github.com/IDEALLab/EngiBench"
-    split: "test"
-    system_prompt: null
-    notes: "No explicit system prompt found in dataset docs; falls back to base_system_prompt."
-  - id: 10
-    name: metallurgy_qa
-    domain: "Металлургия"
     source: huggingface
-    hf_repo: "AbdulrhmanEldeeb/metallurgy-qa"
+    hf_repo: "TIGER-Lab/MMLU-Pro"
+    hf_config: "default"
+    hf_filter: { category: engineering }
     split: "test"
     system_prompt: null
-    notes: "No explicit system prompt found in dataset card; falls back to base_system_prompt."
+    notes: "MMLU-Pro subset filtered by category=engineering."
+  # - id: 10
+  #   name: metallurgy_qa
+  #   domain: "Металлургия"
+  #   source: huggingface
+  #   hf_repo: "AbdulrhmanEldeeb/metallurgy-qa"
+  #   split: "test"
+  #   system_prompt: null
+  #   notes: "No explicit system prompt found in dataset card; falls back to base_system_prompt."
   - id: 11
     name: ruTXTAgroBench
     domain: "АПК"
     source: huggingface
     hf_repo: "MERA-evaluation/ruTXTAgroBench"
-    split: "test"
+    split: "train"
     system_prompt: null
-    notes: "No explicit system prompt found in dataset card; falls back to base_system_prompt."
+    notes: "Train split has labels (outputs); test often has no public labels in MERA."
   - id: 12
     name: RuMedBench
     domain: "Фармацевтика"
     source: github
     repo: "https://github.com/sberbank-ai-lab/RuMedBench"
+    github_data_subset: "RuMedDaNet"
     split: "test"
     system_prompt: null
-    notes: "No explicit system prompt found in dataset docs; falls back to base_system_prompt."
+    notes: "RuMedBench repo: only RuMedDaNet data is loaded (github_data_subset)."

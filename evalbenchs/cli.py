@@ -22,6 +22,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--sample-size", type=int, default=300)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--max-concurrency", type=int, default=4)
+    parser.add_argument(
+        "--gigachat-max-concurrency",
+        type=int,
+        default=None,
+        help="Max concurrent requests for GigaChat (default 1 to avoid 429). Uses --max-concurrency if not set.",
+    )
     return parser.parse_args()
 
 
@@ -39,6 +45,7 @@ def main() -> None:
             args.sample_size,
             args.seed,
             args.max_concurrency,
+            gigachat_max_concurrency=args.gigachat_max_concurrency,
         )
     )
     summary_path = output_dir / "summary.csv"

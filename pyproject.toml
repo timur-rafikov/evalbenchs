@@ -17,6 +17,7 @@ dependencies = [
 [project.scripts]
 run-benchmarks = "evalbenchs.cli:main"
 inspect-benchmarks = "evalbenchs.inspect:main"
+analyze-errors = "evalbenchs.analyze_errors:main"
 
 [tool.setuptools.packages.find]
 include = ["evalbenchs", "evalbenchs.*"]

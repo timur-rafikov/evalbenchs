@@ -10,22 +10,49 @@ CHOICE_LABELS = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"]
 # Keys to try for question / choices / answer when not overridden by benchmark config
 QUESTION_KEYS = ("question", "prompt", "query", "instruction", "stem", "text", "input", "context")
 CHOICES_KEYS = ("choices", "options", "options_list", "alternatives")
-ANSWER_KEYS = ("answer", "label", "correct", "gold", "output", "target", "answer_index", "correct_answer")
+ANSWER_KEYS = ("answer", "label", "correct", "gold", "output", "outputs", "target", "answer_index", "correct_answer", "Solution")
+
+# MERA-style: example has "inputs": {"question", "option_a", "option_b", ...} — use these, ignore "instruction" template
+INPUTS_OPTION_KEYS = ["option_a", "option_b", "option_c", "option_d", "option_e", "option_f", "option_g", "option_h"]
 
 
 def _get_question(example: dict[str, Any], benchmark: BenchmarkConfig | None) -> str:
+    # Prefer actual question from inputs (no template substitution; avoid "Докажи..." etc.)
+    inputs = example.get("inputs")
+    if isinstance(inputs, dict):
+        q = inputs.get("question")
+        if q is not None and str(q).strip():
+            return str(q).strip()
     if benchmark and benchmark.question_key and benchmark.question_key in example:
         val = example[benchmark.question_key]
         if isinstance(val, str) and val.strip():
             return val.strip()
+    # TransportBench etc.: "Problem" field
+    if example.get("Problem") and isinstance(example["Problem"], str) and example["Problem"].strip():
+        return example["Problem"].strip()
     for key in (QUESTION_KEYS if not benchmark or not benchmark.question_key else (benchmark.question_key,)):
         val = example.get(key)
         if isinstance(val, str) and val.strip():
+            # Don't use instruction if it's a template with placeholders (e.g. {question})
+            if key == "instruction" and ("{question}" in val or "{domain}" in val):
+                continue
             return val.strip()
     return str(example)
 
 
 def _get_choices(example: dict[str, Any], benchmark: BenchmarkConfig | None) -> list[str]:
+    # Prefer options from inputs.option_a, option_b, ... (order preserved, skip null/empty)
+    inputs = example.get("inputs")
+    if isinstance(inputs, dict):
+        opts = []
+        for i, key in enumerate(INPUTS_OPTION_KEYS):
+            v = inputs.get(key)
+            if v is None or not str(v).strip():
+                break
+            label = CHOICE_LABELS[i] if i < len(CHOICE_LABELS) else str(i + 1)
+            opts.append(f"{label}. {str(v).strip()}")
+        if opts:
+            return opts
     if benchmark and benchmark.choices_key and benchmark.choices_key in example:
         raw = example[benchmark.choices_key]
         if isinstance(raw, (list, tuple)):
@@ -89,10 +116,23 @@ def extract_gold_answer(example: dict[str, Any], benchmark: BenchmarkConfig | No
                 return CHOICE_LABELS[idx]
             return str(value)
         if isinstance(value, str):
-            s = value.strip().upper()
-            if len(s) == 1 and s in CHOICE_LABELS:
-                return s
-            return value.strip()
+            s = value.strip()
+            if not s:
+                continue
+            # "Solution": "False. The optimal..." -> extract "False"
+            if key == "Solution" or s.lower().startswith("true") or s.lower().startswith("false"):
+                low = s.lower()
+                if low.startswith("true"):
+                    return "True"
+                if low.startswith("false"):
+                    return "False"
+            s_upper = s.upper()
+            if len(s_upper) == 1 and s_upper in CHOICE_LABELS:
+                return s_upper
+            return s  # "Да", "Нет", "A, B", etc.
+        if isinstance(value, (list, tuple)) and value:
+            # e.g. outputs = ["A", "B"] -> "A, B"
+            return ", ".join(str(v).strip() for v in value if v is not None and str(v).strip())
     return None
 
 
